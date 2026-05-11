@@ -1,0 +1,24 @@
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Common IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Log files
+*.log
+
+apod_dataset/
+jsonl/
+
+lora_env/
+wandb/
+
+lora_fixed_zsnr_output/
+lora_flawed_baseline_output/
