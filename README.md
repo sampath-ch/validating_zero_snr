@@ -34,11 +34,13 @@ To reproduce the experiments, execute the scripts in the following sequential or
 
 We utilize the APOD (Astronomy Picture of the Day) dataset to stress-test the models on high-contrast, deep-space imagery.
 
-1. **Download Data:** Run `python get_data.py` to asynchronously download the dataset using the Hugging Face `datasets` library.
+1. **Download Data:** Run `python get_data.py` to asynchronously download the dataset using the Hugging Face `datasets` library. This generates the initial `metadata.jsonl`.
 
-2. **Verify Integrity:** Run `python verify_dataset.py`. This script sanitizes the downloaded data by removing duplicate entries, filtering out missing images, and discarding text captions that exceed the 77-token limit imposed by the CLIP tokenizer.
+2. **Condense Captions:** Run `python condense_captions.py`. Stable Diffusion's CLIP tokenizer has a strict 77-token limit, and many raw NASA descriptions are far too verbose. This script uses the Gemini 1.5 Flash API to intelligently summarize long descriptions into concise captions (under 70 words) while preserving essential visual and scientific details.
 
-3. **Partition Data:** Run `python split_data.py` to shuffle and split the cleaned dataset into discrete training (~3000 images) and validation (~400 images) sets.
+3. **Verify Integrity:** Run `python verify_dataset.py`. This script sanitizes the data by removing duplicates, checking for missing image files, and performing a final check to ensure all captions — including those processed by the LLM — fit within the 77-token limit.
+
+4. **Partition Data:** Run `python split_data.py` to shuffle and split the verified dataset into discrete training (~3000 images) and validation (~400 images) sets.
 
 ---
 
@@ -58,7 +60,7 @@ We fine-tune the models using Low-Rank Adaptation (LoRA).
 
 Once both models are trained and their respective LoRA weights are saved, generate and score the validation images.
 
-1. **Evaluate Models:** Run `python evaluate_models.py`. This script handles inference for both the baseline and the fixed model across the validation set. It then computes the **Luminance Fidelity Index (LFI)**, which tracks both the Perceptual Similarity (DINOv2) and the Luminance EMD (Earth Mover's Distance). The results are saved to `./val_logs/validation_scores.csv`.
+1. **Evaluate Models:** Run `python evaluate_models.py`. This script handles inference for both the baseline and the fixed model across the validation set. It then computes the **LFI (Luminance Fidelity Index)**, which tracks both the Perceptual Similarity (DINOv2) and the Luminance EMD (Earth Mover's Distance). The results are saved to `./val_logs/validation_scores.csv`.
 
 ---
 
