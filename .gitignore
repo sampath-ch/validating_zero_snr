@@ -23,5 +23,5 @@ wandb/
 lora_fixed_zsnr_output/
 lora_flawed_baseline_output/
 
-val_logs/images_fixed
-val_logs/images_flawed
+plots_results/images_fixed
+plots_results/images_flawed
