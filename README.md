@@ -58,7 +58,7 @@ We fine-tune the models using Low-Rank Adaptation (LoRA).
 
 Once both models are trained and their respective LoRA weights are saved, generate and score the validation images.
 
-1. **Evaluate Models:** Run `python evaluate_models.py`. This script handles inference for both the baseline and the fixed model across the validation set. It then computes the **WLPS (Weighted Luminance Perceptual Score)**, which tracks both the Perceptual Similarity (DINOv2) and the Luminance EMD (Earth Mover's Distance). The results are saved to `./val_logs/validation_scores.csv`.
+1. **Evaluate Models:** Run `python evaluate_models.py`. This script handles inference for both the baseline and the fixed model across the validation set. It then computes the **Luminance Fidelity Index (LFI)**, which tracks both the Perceptual Similarity (DINOv2) and the Luminance EMD (Earth Mover's Distance). The results are saved to `./val_logs/validation_scores.csv`.
 
 ---
 

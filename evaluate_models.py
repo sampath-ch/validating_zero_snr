@@ -12,10 +12,10 @@ from torchvision.transforms import ToTensor
 from diffusers import StableDiffusionPipeline, DDIMScheduler
 from PIL import Image
 
-# ---------------------------------------------------------
-# 1. THE EVALUATOR CLASS (Updated: No Clipping)
-# ---------------------------------------------------------
-class WLPS_Evaluator:
+
+# 1. THE EVALUATOR CLASS (Updated: LFI)
+
+class LFI_Evaluator:
     def __init__(self, device="cuda"):
         self.device = device
         print("\nLoading DINOv2 Perceptual Model...")
@@ -47,25 +47,22 @@ class WLPS_Evaluator:
         sim = F.cosine_similarity(emb_gt, emb_gen, dim=-1).item()
         return max(0.0, sim) 
 
-    def compute_wlps(self, img_gt, img_gen, alpha=2.0):
+    def compute_lfi(self, img_gt, img_gen, alpha=2.0):
         s_percept = self.get_perceptual_similarity(img_gt, img_gen)
         w_1 = self.get_luminance_emd(img_gt, img_gen)
         
         # New clean formula without the clipping denominator
-        wlps_score = s_percept / (1.0 + (alpha * w_1))
+        lfi_score = s_percept / (1.0 + (alpha * w_1))
         
         return {
-            "WLPS": wlps_score,
+            "LFI": lfi_score,
             "Similarity": s_percept,
             "Luminance_EMD": w_1
         }
 
-# ---------------------------------------------------------
+
 # 2. GENERATION HELPER
-# ---------------------------------------------------------
-# ---------------------------------------------------------
-# 2. GENERATION HELPER
-# ---------------------------------------------------------
+
 def generate_images(val_data, output_dir, model_id, lora_path, is_fixed=False, batch_size=8):
     os.makedirs(output_dir, exist_ok=True)
     device = "cuda"
@@ -80,7 +77,7 @@ def generate_images(val_data, output_dir, model_id, lora_path, is_fixed=False, b
         pipe.load_lora_weights(lora_path, weight_name="adapter_model.bin")
     else:
         pipe.load_lora_weights(lora_path) # Fallback
-    # --------------------------------------------------------------------
+    -----------
     
     pipe.set_progress_bar_config(disable=True)
     
@@ -136,9 +133,9 @@ def generate_images(val_data, output_dir, model_id, lora_path, is_fixed=False, b
     del pipe
     torch.cuda.empty_cache()
 
-# ---------------------------------------------------------
+
 # 3. MAIN EVALUATION LOOP
-# ---------------------------------------------------------
+
 def run_validation():
     dataset_dir = "/scratch/schettip/CS757/apod_dataset"
     val_jsonl = os.path.join(dataset_dir, "val_metadata.jsonl")
@@ -157,13 +154,13 @@ def run_validation():
     generate_images(val_data, fixed_out_dir, "ByteDance/sd2.1-base-zsnr-laionaes5", "./lora_fixed_zsnr_output", is_fixed=True)
 
     # Phase 3: Evaluate
-    print("\nStarting WLPS Evaluation...")
-    evaluator = WLPS_Evaluator(device="cuda")
+    print("\nStarting LFI Evaluation...")
+    evaluator = LFI_Evaluator(device="cuda")
     to_tensor = ToTensor()
     
     results =[]
     
-    for entry in tqdm(val_data, desc="Evaluating WLPS"):
+    for entry in tqdm(val_data, desc="Evaluating LFI"):
         filename = entry["file_name"]
         
         gt_path = os.path.join(dataset_dir, filename)
@@ -178,13 +175,13 @@ def run_validation():
             print(f"Skipping {filename} due to loading error: {e}")
             continue
 
-        flawed_metrics = evaluator.compute_wlps(img_gt, img_flawed)
-        fixed_metrics = evaluator.compute_wlps(img_gt, img_fixed)
+        flawed_metrics = evaluator.compute_lfi(img_gt, img_flawed)
+        fixed_metrics = evaluator.compute_lfi(img_gt, img_fixed)
         
         results.append({
             "File": filename,
-            "Flawed_WLPS": flawed_metrics["WLPS"],
-            "Fixed_WLPS": fixed_metrics["WLPS"],
+            "Flawed_LFI": flawed_metrics["LFI"],
+            "Fixed_LFI": fixed_metrics["LFI"],
             "Flawed_EMD": flawed_metrics["Luminance_EMD"],
             "Fixed_EMD": fixed_metrics["Luminance_EMD"],
             "Flawed_Sim": flawed_metrics["Similarity"],
@@ -198,14 +195,14 @@ def run_validation():
         writer.writeheader()
         writer.writerows(results)
 
-    avg_flawed_wlps = sum(r["Flawed_WLPS"] for r in results) / len(results)
-    avg_fixed_wlps = sum(r["Fixed_WLPS"] for r in results) / len(results)
+    avg_flawed_lfi = sum(r["Flawed_LFI"] for r in results) / len(results)
+    avg_fixed_lfi = sum(r["Fixed_LFI"] for r in results) / len(results)
     
     print("\n" + "="*40)
     print("FINAL EVALUATION RESULTS (Averages)")
     print("="*40)
-    print(f"Baseline (Flawed) WLPS : {avg_flawed_wlps:.4f}")
-    print(f"Zero-SNR (Fixed) WLPS  : {avg_fixed_wlps:.4f}")
+    print(f"Baseline (Flawed) LFI : {avg_flawed_lfi:.4f}")
+    print(f"Zero-SNR (Fixed) LFI  : {avg_fixed_lfi:.4f}")
     print(f"\nDetailed logs saved to: {csv_path}")
     print("="*40 + "\n")
 
