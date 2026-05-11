@@ -1,0 +1,17 @@
+torch
+torchvision
+diffusers
+transformers
+peft
+accelerate
+wandb
+datasets
+aiohttp
+tqdm
+pillow
+pandas
+matplotlib
+seaborn
+scipy
+scikit-image
+numpy
