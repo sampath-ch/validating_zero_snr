@@ -2,25 +2,6 @@
 
 This repository contains the data pipeline, training scripts, and evaluation metrics required to validate the Zero-SNR implementation in Stable Diffusion 2.1. The project compares a standard (flawed) baseline model against an improved Zero-SNR model, measuring fidelity and luminance accuracy using the WLPS metric, and includes a mechanistic probe to analyze the models' sensitivity to noise bias.
 
-## Downloads & Resources
-
-This repository contains the fine-tuned LoRA weights, dataset, and metadata necessary to reproduce the experiments and qualitative results discussed in the technical report.
-
-### Model Weights (LoRA)
-Both models were fine-tuned with a rank of $r=64$ and $\alpha=64$ targeting the UNet attention layers (`to_k`, `to_q`, `to_v`, `to_out.0`). To run inference, load the respective base models and inject these LoRA weights.
-
-* **[Fixed Zero-SNR Model Weights ($v$-prediction)]https://drive.google.com/file/d/18MTQkT2J5js1s92iJ1CwSL3NnFQuYMwj/view?usp=sharing** 
-  * *Base Model:* `ByteDance/sd2.1-base-zsnr-laionaes5`
-  * *Description:* The improved model trained with a Zero-Terminal SNR schedule, $v$-prediction, and trailing DDIM timesteps. Capable of rendering pure pitch-black dynamic ranges.
-* **[Flawed Baseline Model Weights ($\epsilon$-prediction)]https://drive.google.com/file/d/1JCZgo2WTNcHo_0KA-jNCuueM1w7mkM_a/view?usp=sharing**
-  * *Base Model:* `Manojb/stable-diffusion-2-1-base`
-  * *Description:* The standard baseline model constrained by low-frequency signal leakage. Exhibits the characteristic "gray-shift" mathematical anomaly.
-
-### Dataset
-The training and validation sets are sourced from the Astronomy Picture of the Day (APOD) archive. 
-
-* **[APOD Metadata & Data Links] https://drive.google.com/file/d/1aKSi2N0gsoJukpiYtrE3wwAbxnGNiA21/view?usp=sharing** 
-  * *Instructions:* Here is the link to the data file containing the Gemini-optimized captions and image identifiers. To actually download the 3,400 high-resolution images, download this file and use it in combination with the provided `get_data` script in this repository.
 
 ## Environment Setup
 
@@ -102,3 +83,24 @@ Generate statistical plots and visual grids to interpret the evaluation metrics.
 To understand why the models behave differently, we use a diagnostic probe to monitor the internal network activations.
 
 1. **Run Diagnostic Probe:** Execute `python mean_brightness_channel.py`. This script intervenes in the forward pass by applying an artificial mean shift to the pure input noise. It hooks into the UNet's mid-block to measure activation sensitivity and calculates the multiplier effect on the predicted initial image brightness (x0).
+
+## Downloads & Resources
+
+This repository contains the fine-tuned LoRA weights, dataset, and metadata necessary to reproduce the experiments and qualitative results discussed in the technical report.
+
+### Model Weights (LoRA)
+Both models were fine-tuned with a rank of $r=64$ and $\alpha=64$ targeting the UNet attention layers (`to_k`, `to_q`, `to_v`, `to_out.0`). To run inference, load the respective base models and inject these LoRA weights.
+
+* **[Fixed Zero-SNR Model Weights ($v$-prediction)]https://drive.google.com/file/d/18MTQkT2J5js1s92iJ1CwSL3NnFQuYMwj/view?usp=sharing** 
+  * *Base Model:* `ByteDance/sd2.1-base-zsnr-laionaes5`
+  * *Description:* The improved model trained with a Zero-Terminal SNR schedule, $v$-prediction, and trailing DDIM timesteps. Capable of rendering pure pitch-black dynamic ranges.
+* **[Flawed Baseline Model Weights ($\epsilon$-prediction)]https://drive.google.com/file/d/1JCZgo2WTNcHo_0KA-jNCuueM1w7mkM_a/view?usp=sharing**
+  * *Base Model:* `Manojb/stable-diffusion-2-1-base`
+  * *Description:* The standard baseline model constrained by low-frequency signal leakage. Exhibits the characteristic "gray-shift" mathematical anomaly.
+
+### Dataset
+The training and validation sets are sourced from the Astronomy Picture of the Day (APOD) archive. 
+
+* **[APOD Metadata & Data Links] https://drive.google.com/file/d/1aKSi2N0gsoJukpiYtrE3wwAbxnGNiA21/view?usp=sharing** 
+  * *Instructions:* Here is the link to the data file containing the Gemini-optimized captions and image identifiers. To actually download the 3,400 high-resolution images, download this file and use it in combination with the provided `get_data` script in this repository.
+
